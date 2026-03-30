@@ -1,0 +1,38 @@
+{
+    "collections": [
+        {
+            "name": "webapp_queue_data",
+            "indexes": [
+                {
+                    "keys": {
+                        "orgId": 1,
+                        "queueName": 1
+                    },
+                    "options": {
+                        "unique": true
+                    }
+                }
+            ],
+            "fields": [
+                "orgId",
+                "queueName",
+                "queueType",
+                "prefix",
+                "currentServing",
+                "currentServingSeq",
+                "currentSource",
+                "nextSeq",
+                "waitingQueue",
+                "history",
+                "displayMessage",
+                "displayAccentColor",
+                "lastUpdatedAt",
+                "lastUpdatedBy"
+            ]
+        }
+    ],
+    "notes": [
+        "Queue documents are shared by {orgId, queueName}",
+        "Round-robin and reservation modes share the same collection"
+    ]
+}

@@ -1,0 +1,98 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# Playwright auth state and MCP state
+e2e/.auth/
+/test-results/
+/playwright-report/
+/.playwright-mcp/
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+.vps
+
+# internal planning and private runbooks (keep out of public release)
+.planning/
+PIANO-ATTIVITA.md
+docs/DEPLOY-PRODUCTION.md
+
+#aws
+.aws/*
+!.aws/deploy.env.example
+!.aws/bootstrap-lightsail.sh
+!.aws/deploy.sh
+!.aws/install-post-commit-hook.sh
+!.aws/bootstrap-native.sh
+!.aws/deploy-native.sh
+!.aws/install-post-commit-hook-native.sh
+!.aws/deploy.native.env.example
+!.aws/native-common.sh
+!.aws/native-step-01-check-ssh.sh
+!.aws/native-step-02-bootstrap.sh
+!.aws/native-step-03-local-build.sh
+!.aws/native-step-03-upload.sh
+!.aws/native-step-04-build.sh
+!.aws/native-step-05-install-service.sh
+!.aws/native-step-06-install-apache-vhost.sh
+!.aws/native-step-07-activate.sh
+!.aws/native-step-08-status.sh
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+public/*
+!public/ciao_sprite_dark.png
+!public/ciao_sprite_light.png
+public/thumbnails/thumb_8dc6ee1e-f156-4230-bfa2-ab98750fbddf.webp
+public/thumbnails/thumb_55decaa0-99e4-44b8-90ef-41b1a7329a8a.webp
+public/thumbnails/thumb_360ad731-b198-4405-8c32-5777638f1ba0.webp
+public/thumbnails/thumb_3498ed65-1fc1-423c-b0f4-14f54813056b.webp
+public/thumbnails/thumb_a64d9dce-58bc-4924-8607-5b19774e5197.webp
+public/thumbnails/thumb_ab4122a9-9a99-4b68-a01e-ed75c79131a0.webp
+public/thumbnails/thumb_b4594c31-7402-43ba-a2e2-0c34c86bb31c.webp
+public/thumbnails/thumb_cce62fd5-be4a-4488-8898-3f27b394f5c7.webp
+public/thumbnails/thumb_da29defd-8b23-453f-b97b-727ba65b28e5.webp
+public/thumbnails/thumb_fe2b5881-fecc-44ca-8a52-bcbef2288a1f.webp
+public/uploads/0d7f64eb-4cc7-4a2a-b057-1e64c96659e4.png
+public/uploads/1bf829bb-f7dd-4447-b11d-8a0187162a19.png
+public/uploads/3cd35144-38b7-4d09-90a8-b8bf29be3bc5.jpg
+public/uploads/6fd46701-aac1-4f01-b08b-ec177d08735d.jpg
+public/uploads/8c8ed7ca-cd2f-476c-8803-c0459d0eef7a.png
+public/uploads/19f980dd-19a9-403f-a1ea-138111f96287.png
+public/uploads/9592c67b-90a1-4aa1-b18b-d17688dba041.jpg
+public/uploads/835274b2-2db6-4466-bb38-3e58e17586aa.jpg
+public/uploads/b631dac4-f9df-4f2a-918b-4d22b4f721f7.png
+public/uploads/c7d0ac44-7c71-4afc-be76-372575a633bc.pdf
+public/uploads/d78a5da4-ea6a-4adf-b4b8-f0b47543c125.jpg

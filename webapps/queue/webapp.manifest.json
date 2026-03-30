@@ -1,0 +1,39 @@
+{
+    "appId": "queue",
+    "name": "Eliminacode",
+    "sdkVersion": 1,
+    "entrypoints": {
+        "playerPath": "/webapps/queue/[instanceId]?token=[publicToken]&mode=[mode]",
+        "stateApi": "/api/public/webapps/queue/[instanceId]/state?token=[publicToken]",
+        "controlApi": "/api/public/webapps/queue/[instanceId]/control?token=[publicToken]"
+    },
+    "modes": [
+        "queue",
+        "remote",
+        "waiting-list",
+        "kiosk",
+        "display"
+    ],
+    "serviceModes": [
+        "reservation",
+        "round-robin"
+    ],
+    "settings": {
+        "required": [
+            "mode",
+            "queueName",
+            "queueType",
+            "serviceMode",
+            "bookingEnabled",
+            "maxWaiting"
+        ],
+        "optional": [
+            "prefix",
+            "roundRobinMaxNumber",
+            "waitingListLimit",
+            "kioskQueueNames",
+            "showWaitingCount",
+            "accentColor"
+        ]
+    }
+}

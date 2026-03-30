@@ -1,0 +1,39 @@
+name: Feature request
+description: Propose an enhancement
+labels:
+  - type:feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing a feature. Help us understand the problem and impact.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem are you trying to solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe your proposed solution.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: impact
+    attributes:
+      label: Expected impact
+      description: Who benefits and how?
+    validations:
+      required: true
+  - type: input
+    id: milestone
+    attributes:
+      label: Suggested milestone
+      description: Optional (e.g., M1, M2)

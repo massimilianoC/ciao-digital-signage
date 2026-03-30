@@ -1,0 +1,26 @@
+{
+    "appId": "google-calendar",
+    "name": "Google Calendar",
+    "sdkVersion": 1,
+    "entrypoints": {
+        "playerPath": "/webapps/google-calendar/[instanceId]?token=[publicToken]"
+    },
+    "modes": [
+        "public-ics",
+        "api-key"
+    ],
+    "settings": {
+        "required": [
+            "mode",
+            "timezone",
+            "refreshSeconds",
+            "maxItems"
+        ],
+        "optional": [
+            "title",
+            "calendarId",
+            "publicIcsUrl",
+            "accentColor"
+        ]
+    }
+}

@@ -1,0 +1,26 @@
+# UX TEST
+
+# QR CODE LIVE TICKET:
+
+- IL TICKET IN CHIAMATA DEVE LAMPEGGIARE  e SE POSIBILE SUONAre con un allarme (soft).
+- IL QR CODE NEL KIOSK DEVE DISABILITARSI DOPOO 60 (o 30?) secondi o appena l'utente si collega alla pagina, invalidanando il link e il qr code.
+- IL QR CODE IN STATO "next in line" si deve allarmare in giallo", quando è il nuero corrente si arma in VERDE e una volta SERVITO diventa GRIGIO e RINGRAZIA (thank you o grazie).
+
+# REMOTE:
+
+- IL REMOTE NON GESTISCe LA PREVIEW DEI DIPLASY, MA DVOREBBe PROPORRE DI SELEZIONARE UNO O PI§D IPALSYT.
+- SE IN configurazione REMOTE non ho slezionato i display da controllare, li mostro tutti!
+- Solo se li selezioni li sto filtrando per confitguirare in modche uin REMOPTE non mostri alcuni diaplua e altri sì.
+- AL selezione di display in confgurazione dovrebbe essere via combo box incrementale con TAG CHIP che si popolano e hanno una X per mrimuoverlo. Slavataggio confgurazione su SALVA.
+- se creo un remote dopo le code, riesco a pilotrane più di una. Ma non riesco a scelgiere di forzare l'avnamento solo su un diplausy l'obietivo è di avere un dispaly per sportello e il remote imposta che controlla un display specifico e avanza una coda specifica in un dispaly specifico.
+
+# CODE MULTIPLE:
+
+- ho generao una coda seconary creadno un nuovo display e inserendo un nuovo nome coda. viene creato il dataset ma il display viene comunque associato alla mail perchè c'è un diopiio slelettore in config che va in override. vorrei strutturare meglio la gestione dell'agssegnazione multipla o univcoa code.
+- Una volta creata la coda seoncsdary, se torno in remote, non posso associare la nuvoa coda ad un remote già esistnte. servirebbe un flusso dinamico o la possibilità di creare code nella sezione DATASET, ma attualemten ritorna errore 50'0. Nella sezione dataset per le CODE o CODE PçLUS: la generaizone di un nuvoo dataset dovrebbe creare una coda standar e poii in modifica si peronsalizza nome ecc. ORa da errore 500. er ora è sufficiente poterla crare creandfo un nuvoo diplayu o remotr o kisok. lim'oortte eè che poi sia visibile alle vari configurazioni dei vari compontneti istanze esistentei e che non sia in override più funzioni di assegnazione che invcalidano la selezioine.
+
+# DISPLAY
+
+- il remot epropone di inviare un messaggio video testo e audio, ma no sento audio. Serve u motore di sintesi vocale? C'è integrato nei borwser come chrtome?
+- se un display deve poter gestire più code, quando lo creo è iol remote che gestisce l'assegnazione. Quindi anche qui se non seleziono code, le accetta tutte, se la seleizoni si sincronizza ad una coda,e solo il rmeote può mandarl  in ovverride in acso (e perdere la suncornizzaizone). valuta crriticà.
+- se creo un remote dopo le code, riesco a pilotrane più di una. Ma non riesco a scelgiere di forzare l'avnamento solo su un diplausy l'obietivo è di avere un dispaly per sportello e il remote imposta che controlla un display specifico e avanza una coda specifica in un dispaly specifico.

@@ -1,0 +1,79 @@
+export const VIDEO_POOL_SIZE = 2;
+
+export class VideoPool {
+  private slots: HTMLVideoElement[] = [];
+
+  private initialized = false;
+
+  init(): void {
+    if (this.initialized) {
+      return;
+    }
+
+    const mountNode = document.getElementById("player-mount");
+    if (!mountNode) {
+      throw new Error("VideoPool: #player-mount not found");
+    }
+
+    for (let index = 0; index < VIDEO_POOL_SIZE; index += 1) {
+      const video = document.createElement("video");
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = "auto";
+      video.style.cssText =
+        "position:absolute;inset:0;width:100%;height:100%;object-fit:contain;";
+      video.style.display = "none";
+      mountNode.appendChild(video);
+      this.slots.push(video);
+    }
+
+    this.initialized = true;
+  }
+
+  assign(slotIndex: number, src: string): HTMLVideoElement {
+    if (!this.initialized) {
+      throw new Error("VideoPool: call init() before assign()");
+    }
+
+    const slot = this.slots[slotIndex];
+    if (!slot) {
+      throw new Error(`VideoPool: slot ${slotIndex} does not exist`);
+    }
+
+    slot.src = src;
+    slot.style.display = "block";
+    return slot;
+  }
+
+  release(slotIndex: number): void {
+    if (!this.initialized) {
+      return;
+    }
+
+    const slot = this.slots[slotIndex];
+    if (!slot) {
+      return;
+    }
+
+    slot.pause();
+    slot.removeAttribute("src");
+    slot.load();
+    slot.style.display = "none";
+  }
+
+  destroy(): void {
+    for (let index = 0; index < this.slots.length; index += 1) {
+      this.release(index);
+      this.slots[index].remove();
+    }
+
+    this.slots = [];
+    this.initialized = false;
+  }
+
+  getSlot(slotIndex: number): HTMLVideoElement | undefined {
+    return this.slots[slotIndex];
+  }
+}
+
+export const videoPool = new VideoPool();

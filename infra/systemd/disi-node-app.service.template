@@ -1,0 +1,25 @@
+[Unit]
+Description=__APP_DESCRIPTION__
+After=network.target bitnami.mongodb.service
+Wants=bitnami.mongodb.service
+
+[Service]
+Type=simple
+User=bitnami
+Group=bitnami
+WorkingDirectory=__CURRENT_DIR__
+Environment=NODE_ENV=production
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=__APP_PORT__
+Environment=PATH=__NODE_BIN_DIR__:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+EnvironmentFile=__SHARED_DIR__/.env.production
+ExecStart=__NODE_BIN_DIR__/node server.js
+Restart=always
+RestartSec=5
+TimeoutStartSec=120
+KillSignal=SIGTERM
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

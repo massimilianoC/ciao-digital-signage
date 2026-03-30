@@ -1,0 +1,35 @@
+# Primary Ciao Digital Signage app vhost
+<VirtualHost *:80>
+  ServerName __SERVER_NAME__
+  ProxyPreserveHost On
+  ProxyRequests Off
+  RequestHeader set X-Forwarded-Proto "http"
+
+  ProxyPass /socket.io/ http://127.0.0.1:__APP_PORT__/socket.io/ upgrade=websocket retry=0 timeout=60
+  ProxyPassReverse /socket.io/ http://127.0.0.1:__APP_PORT__/socket.io/
+  ProxyPass / http://127.0.0.1:__APP_PORT__/ retry=0 timeout=60 keepalive=On
+  ProxyPassReverse / http://127.0.0.1:__APP_PORT__/
+</VirtualHost>
+
+<VirtualHost *:443>
+  ServerName __SERVER_NAME__
+  SSLEngine on
+  SSLCertificateFile "/opt/bitnami/apache/conf/bitnami/certs/server.crt"
+  SSLCertificateKeyFile "/opt/bitnami/apache/conf/bitnami/certs/server.key"
+  ProxyPreserveHost On
+  ProxyRequests Off
+  RequestHeader set X-Forwarded-Proto "https"
+
+  ProxyPass /socket.io/ http://127.0.0.1:__APP_PORT__/socket.io/ upgrade=websocket retry=0 timeout=60
+  ProxyPassReverse /socket.io/ http://127.0.0.1:__APP_PORT__/socket.io/
+  ProxyPass / http://127.0.0.1:__APP_PORT__/ retry=0 timeout=60 keepalive=On
+  ProxyPassReverse / http://127.0.0.1:__APP_PORT__/
+</VirtualHost>
+
+# Example additional service on another hostname:
+# <VirtualHost *:80>
+#   ServerName api.example.com
+#   ProxyPreserveHost On
+#   ProxyPass / http://127.0.0.1:3200/
+#   ProxyPassReverse / http://127.0.0.1:3200/
+# </VirtualHost>

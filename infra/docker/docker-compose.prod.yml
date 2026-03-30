@@ -1,0 +1,38 @@
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    env_file:
+      - ../../.env.production
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3100
+      MONGODB_URI: mongodb://mongo:27017/ciao
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - ciao_uploads:/app/public/uploads
+      - ciao_thumbnails:/app/public/thumbnails
+
+  mongo:
+    image: mongo:8
+    restart: unless-stopped
+    command: ["--bind_ip_all"]
+    volumes:
+      - ciao_mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ciao_mongo_data:
+  ciao_uploads:
+  ciao_thumbnails:

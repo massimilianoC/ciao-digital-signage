@@ -1,0 +1,38 @@
+{
+    "appId": "wordpress-link",
+    "name": "WordpressLink",
+    "sdkVersion": 1,
+    "entrypoints": {
+        "playerPath": "/webapps/wordpress-link/[instanceId]?token=[publicToken]",
+        "catalogApi": "/api/public/webapps/wordpress-link/[instanceId]/catalog?token=[publicToken]"
+    },
+    "modes": [
+        "wordpress-posts",
+        "wordpress-custom",
+        "woocommerce-products"
+    ],
+    "viewModes": [
+        "grid",
+        "list",
+        "carousel"
+    ],
+    "settings": {
+        "required": [
+            "sourceKind",
+            "authMode",
+            "baseUrl",
+            "title",
+            "itemsPerPage",
+            "refreshSeconds",
+            "viewMode",
+            "templatePreset",
+            "fieldBindings"
+        ],
+        "optional": [
+            "postType",
+            "taxonomyFilters",
+            "autoScrollMode",
+            "theme"
+        ]
+    }
+}

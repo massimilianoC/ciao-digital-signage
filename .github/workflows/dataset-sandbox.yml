@@ -1,0 +1,39 @@
+name: Dataset Sandboxed Verification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "app/api/webapps/datasets/**"
+      - "app/api/webapps/instances/**/datasets/**"
+      - "components/cms/webapps/**"
+      - "lib/sdk/webapp-dataset.service.ts"
+      - "lib/sdk/webapp-host.service.ts"
+      - "e2e/webapps-datasets.spec.ts"
+      - "tests/services/webapp-host.service.test.ts"
+      - "package.json"
+      - "playwright.config.ts"
+
+jobs:
+  dataset-sandbox:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run dataset sandbox pipeline
+        run: npm run pipeline:dataset-sandbox

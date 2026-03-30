@@ -1,0 +1,51 @@
+{
+    "appId": "queue-plus",
+    "name": "QueuePLUS",
+    "sdkVersion": 1,
+    "entrypoints": {
+        "playerPath": "/webapps/queue-plus/[instanceId]?token=[publicToken]&mode=[mode]",
+        "stateApi": "/api/public/webapps/queue-plus/[instanceId]/state?token=[publicToken]",
+        "controlApi": "/api/public/webapps/queue-plus/[instanceId]/control?token=[publicToken]"
+    },
+    "modes": [
+        "queue",
+        "remote",
+        "waiting-list",
+        "kiosk",
+        "display"
+    ],
+    "serviceModes": [
+        "reservation",
+        "round-robin",
+        "multigate"
+    ],
+    "settings": {
+        "required": [
+            "mode",
+            "datasetId",
+            "queueType",
+            "serviceMode",
+            "bookingEnabled",
+            "maxWaiting"
+        ],
+        "optional": [
+            "prefix",
+            "roundRobinMaxNumber",
+            "waitingListLimit",
+            "waitingListLayout",
+            "waitingListDatasetIds",
+            "waitingListMergeMode",
+            "allowedDatasetIds",
+            "allowedDisplayIds",
+            "activeDisplayId",
+            "displayBindingMode",
+            "kioskDatasetIds",
+            "showWaitingCount",
+            "accentColor",
+            "audio",
+            "ticketDeliveryMode",
+            "printerProfile",
+            "enableDigitalTicket"
+        ]
+    }
+}

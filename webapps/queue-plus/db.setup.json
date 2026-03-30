@@ -1,0 +1,47 @@
+{
+    "collections": [
+        {
+            "name": "webapp_queue_plus_data",
+            "indexes": [
+                {
+                    "keys": {
+                        "orgId": 1,
+                        "datasetId": 1
+                    },
+                    "options": {
+                        "unique": true
+                    }
+                },
+                {
+                    "keys": {
+                        "orgId": 1,
+                        "queueName": 1
+                    },
+                    "options": {}
+                }
+            ],
+            "fields": [
+                "orgId",
+                "datasetId",
+                "queueName",
+                "queueType",
+                "prefix",
+                "currentServing",
+                "currentServingSeq",
+                "currentServingIssuedAt",
+                "currentSource",
+                "nextSeq",
+                "waitingQueue",
+                "history",
+                "displayMessage",
+                "displayAccentColor",
+                "lastUpdatedAt",
+                "lastUpdatedBy"
+            ]
+        }
+    ],
+    "notes": [
+        "QueuePLUS runtime state is isolated from legacy queue state",
+        "QueuePLUS is intended to stress-test SDK sandboxing, dataset separation, and future-ready models"
+    ]
+}
