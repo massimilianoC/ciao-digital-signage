@@ -13,9 +13,10 @@ interface QueueState {
 interface Props {
     instanceId: string;
     token: string;
-    queueName: string;
+    datasetId: string;
     mode: "display" | "queue" | "remote" | "waiting-list" | "kiosk";
     settings?: Record<string, unknown>;
+    onSettingsChange?: (partial: Record<string, unknown>) => void;
 }
 
 interface QueueCatalogItem {
@@ -30,7 +31,8 @@ interface QueueCatalogItem {
  * Advanced (custom) configurator tab for the Queue app.
  * Shows a live preview of the queue state and quick-control actions.
  */
-export function QueueCustomConfig({ instanceId, token, queueName, mode, settings }: Props) {
+export function QueueCustomConfig({ instanceId, token, datasetId, mode, settings, onSettingsChange }: Props) {
+    const queueName = (settings?.queueName as string | undefined) ?? datasetId;
     const [state, setState] = useState<QueueState | null>(null);
     const [actionMsg, setActionMsg] = useState<string>("");
     const [queueCatalog, setQueueCatalog] = useState<QueueCatalogItem[]>([]);

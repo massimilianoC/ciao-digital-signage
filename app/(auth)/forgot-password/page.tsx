@@ -30,7 +30,10 @@ export default function ForgotPasswordPage() {
   if (sent) return (
     <div className="rounded-lg border border-border bg-card p-8 text-center text-card-foreground shadow-sm">
       <h1 className="text-xl font-bold mb-2">Check your email</h1>
-      <p className="text-muted-foreground">A password reset link has been sent. Check Mailhog at <a href="http://localhost:8025" className="text-blue-600">localhost:8025</a> in dev.</p>
+      <p className="text-muted-foreground">A password reset link has been sent. Check your email inbox.</p>
+      {process.env.NODE_ENV !== "production" && (
+        <p className="mt-2 text-sm text-muted-foreground">In dev, check Mailhog at <a href="http://localhost:8025" className="text-blue-600">localhost:8025</a>.</p>
+      )}
     </div>
   );
 

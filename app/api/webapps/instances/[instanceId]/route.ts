@@ -112,7 +112,7 @@ export const PATCH = withErrorHandler(
             if (aggregate.instance.appId === "queue-plus") {
                 settingsPatch = await normalizeQueuePlusSettingsPatch(
                     sess.orgId,
-                    (aggregate.settings as Record<string, unknown>)?.mode,
+                    (aggregate.settings as unknown as Record<string, unknown>)?.mode,
                     settingsPatch,
                 );
             }

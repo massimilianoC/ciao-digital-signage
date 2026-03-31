@@ -52,7 +52,7 @@ function toPlayerManifest(
       url: item.url ?? item.fileUrl ?? "",
       layoutId:
         item.type === "layout"
-          ? String(item.contentId ?? item.id ?? "")
+          ? String(item.contentId ?? "")
           : undefined,
       title: item.title,
       thumbnailUrl: item.thumbnailUrl,

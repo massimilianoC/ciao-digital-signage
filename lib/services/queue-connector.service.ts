@@ -4,6 +4,7 @@ import { Types } from "mongoose";
 
 import { connectDB } from "@/lib/db/connection";
 import { WebAppConfigModel, type QueueSettings } from "@/lib/db/models/WebAppConfig";
+import { WebAppDatasetModel } from "@/lib/db/models/WebAppDataset";
 import { WebAppInstanceModel, type IWebAppInstance } from "@/lib/db/models/WebAppInstance";
 import { WebAppStateModel, type IWebAppState } from "@/lib/db/models/WebAppState";
 import {
@@ -151,6 +152,27 @@ export async function getQueueDataByName(
     return (queueData as IWebAppQueueData | null) ?? null;
 }
 
+export async function getQueueDatasetById(orgId: string, datasetId: string) {
+    if (!Types.ObjectId.isValid(datasetId)) return null;
+
+    await connectDB();
+    return WebAppDatasetModel.findOne({
+        _id: new Types.ObjectId(datasetId),
+        orgId: new Types.ObjectId(orgId),
+        appId: "queue",
+    }).lean();
+}
+
+export async function getQueueDataByDatasetId(orgId: string, datasetId: string): Promise<IWebAppQueueData | null> {
+    if (!Types.ObjectId.isValid(datasetId)) return null;
+
+    await connectDB();
+    return WebAppQueueDataModel.findOne({
+        orgId: new Types.ObjectId(orgId),
+        datasetId: new Types.ObjectId(datasetId),
+    }).lean() as Promise<IWebAppQueueData | null>;
+}
+
 export async function listQueueCatalogForOrg(orgId: string) {
     await connectDB();
 
@@ -197,24 +219,25 @@ async function getQueueSettingsForInstance(
 // ─── Queue Data Bootstrapping ────────────────────────────────────────────────
 
 /**
- * Finds or creates the shared queue data document for (orgId, queueName).
- * Multiple instances with the same queueName share this document.
+ * Finds or creates the shared queue data document for (orgId, datasetId).
+ * Each dataset has its own queue state document.
  */
 export async function getOrCreateQueueData(
     orgId: string,
-    settings: Pick<QueueSettings, "queueName" | "queueType" | "prefix">,
+    settings: { datasetId: Types.ObjectId; queueName: string; queueType: string; prefix?: string },
 ): Promise<IWebAppQueueData> {
     await connectDB();
 
     const existing = await WebAppQueueDataModel.findOne({
         orgId: new Types.ObjectId(orgId),
-        queueName: normalizeQueueName(settings.queueName),
+        datasetId: settings.datasetId,
     }).lean();
 
     if (existing) return existing as IWebAppQueueData;
 
     const created = await WebAppQueueDataModel.create({
         orgId: new Types.ObjectId(orgId),
+        datasetId: settings.datasetId,
         queueName: normalizeQueueName(settings.queueName),
         queueType: settings.queueType,
         prefix: settings.prefix,
@@ -299,14 +322,23 @@ export async function createQueueConnector(
         });
     }
 
-    // 6. Ensure queue data document exists (shared across instances with same name)
-    const queueData = getEffectiveQueueMode(input.settings.mode) === "kiosk"
-        ? null
-        : await getOrCreateQueueData(input.orgId, {
-            queueName: input.settings.queueName,
+    // 6. Ensure queue data document exists (one per dataset)
+    let queueData = null;
+    if (getEffectiveQueueMode(input.settings.mode) !== "kiosk") {
+        const dataset = await WebAppDatasetModel.findOne({
+            _id: new Types.ObjectId(input.settings.datasetId),
+            orgId: orgObjectId,
+            appId: "queue",
+        }).lean();
+        const datasetCfg = (dataset?.config ?? {}) as Record<string, unknown>;
+        const queueName = typeof datasetCfg.queueName === "string" ? datasetCfg.queueName : input.settings.datasetId;
+        queueData = await getOrCreateQueueData(input.orgId, {
+            datasetId: new Types.ObjectId(input.settings.datasetId),
+            queueName,
             queueType: input.settings.queueType,
             prefix: input.settings.prefix,
         });
+    }
 
     const finalInstance = await WebAppInstanceModel.findById(instance._id).lean();
 
@@ -344,7 +376,7 @@ export async function getQueueAggregateForPublicAccess(
         ? null
         : await WebAppQueueDataModel.findOne({
             orgId: instance.orgId,
-            queueName: normalizeQueueName(settings.queueName),
+            datasetId: new Types.ObjectId(settings.datasetId),
         }).lean();
 
     if (getEffectiveQueueMode(settings.mode) !== "kiosk" && !queueData) return null;

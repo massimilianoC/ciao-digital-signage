@@ -2,15 +2,14 @@ import { createAuthClient } from "better-auth/react";
 import { organizationClient, adminClient } from "better-auth/client/plugins";
 
 function resolveAuthBaseUrl(): string {
-  const envUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (envUrl) return envUrl;
-
-  // Fallback to the actual browser origin to avoid port/config drift in dev.
+  // Browser: always use the actual origin — avoids baked-in localhost URLs in
+  // production bundles when NEXT_PUBLIC_APP_URL was set to localhost at build time.
   if (typeof window !== "undefined" && window.location?.origin) {
     return window.location.origin;
   }
 
-  return "http://localhost:3100";
+  // SSR context: use the configured env var (or localhost for local dev).
+  return process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3100";
 }
 
 export const authClient = createAuthClient({

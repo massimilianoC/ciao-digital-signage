@@ -10,16 +10,18 @@ import { mongoClient } from "@/lib/db/connection";
 import nodemailer from "nodemailer";
 
 // ─── Email Transport ─────────────────────────────────────────────────────────
-// When SMTP_HOST is set → use real SMTP (Mailhog / production)
+// When SMTP_HOST is set → use real SMTP (production / Mailhog)
 // When SMTP_HOST is missing → mock: log email content to console
 const hasSmtp = !!process.env.SMTP_HOST;
 
 const realTransport = hasSmtp
   ? nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT ?? 1025),
-    secure: false,
-    ignoreTLS: true,
+    port: Number(process.env.SMTP_PORT ?? 587),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: process.env.SMTP_USER
+      ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+      : undefined,
   })
   : null;
 
@@ -86,8 +88,9 @@ export const auth = betterAuth({
       },
     }),
     organization({
-      // Only super-admin creates organizations — not self-service
-      allowUserToCreateOrganization: false,
+      // Alpha self-service onboarding: each new account can own one organization
+      allowUserToCreateOrganization: true,
+      organizationLimit: 1,
     }),
   ],
 });

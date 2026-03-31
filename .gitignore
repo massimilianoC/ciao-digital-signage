@@ -26,6 +26,9 @@ e2e/.auth/
 # production
 /build
 
+# deployment artefacts (generated locally, never committed)
+*.zip
+
 # misc
 .DS_Store
 *.pem
@@ -47,6 +50,12 @@ yarn-error.log*
 .planning/
 PIANO-ATTIVITA.md
 docs/DEPLOY-PRODUCTION.md
+
+# AI assistant local config (machine-specific, never committed)
+.claude/
+
+# one-off dev/migration scripts (not part of the public codebase)
+tmp-*.mjs
 
 #aws
 .aws/*

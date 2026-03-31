@@ -65,7 +65,7 @@ function toPlayerManifest(
       url: item.url ?? item.fileUrl ?? "",
       layoutId:
         item.type === "layout"
-          ? String(item.contentId ?? item.id ?? "")
+          ? String(item.contentId ?? "")
           : undefined,
       urlSubtype: asUrlSubtype(item.urlSubtype ?? item.config?.urlSubtype),
       interactive: item.type === "url" && isSoleInteractiveUrl ? true : undefined,

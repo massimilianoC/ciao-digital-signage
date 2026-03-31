@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import type { LayoutZone } from "@/components/cms/layouts/types";
@@ -67,7 +67,7 @@ function parseDraft(raw: string | null): PreviewDraft | null {
   }
 }
 
-export default function LayoutPreviewPage() {
+function LayoutPreviewPageInner() {
   const searchParams = useSearchParams();
   const draftKey = searchParams.get("draftKey") ?? "layout-preview-draft:new";
   const isEmbedded = searchParams.get("embedded") === "1";
@@ -355,5 +355,13 @@ export default function LayoutPreviewPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function LayoutPreviewPage() {
+  return (
+    <Suspense>
+      <LayoutPreviewPageInner />
+    </Suspense>
   );
 }

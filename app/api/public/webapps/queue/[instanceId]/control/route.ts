@@ -5,8 +5,9 @@ import {
     advanceQueue,
     buildIssuedTicketPayload,
     getQueueAggregateForPublicAccess,
+    getQueueDatasetById,
     issueNextNumber,
-    normalizeQueueNameList,
+    normalizeQueueName,
     resetQueue,
     retreatQueue,
     setCustomNumber,
@@ -72,7 +73,15 @@ export async function POST(
     }
 
     const orgId = String(agg.instance.orgId);
-    const queueName = agg.config.queueName;
+
+    const primaryDataset = await getQueueDatasetById(orgId, agg.config.datasetId);
+    const primaryConfig = (primaryDataset?.config ?? {}) as Record<string, unknown>;
+    const queueName = typeof primaryConfig.queueName === "string" ? primaryConfig.queueName : null;
+
+    if (!queueName) {
+        return NextResponse.json({ error: "Queue dataset not found" }, { status: 404 });
+    }
+
     let result: string | null = null;
     let ticket: ReturnType<typeof buildIssuedTicketPayload> | null = null;
 
@@ -108,8 +117,17 @@ export async function POST(
                     throw new Error("Solo il kiosk puo' emettere per altre code");
                 }
 
-                const allowedQueues = normalizeQueueNameList(agg.config.kioskQueueNames);
-                const targetQueue = parsed.data.queueName.trim().toLowerCase();
+                const targetQueue = normalizeQueueName(parsed.data.queueName);
+                const kioskDatasetIds = Array.isArray(agg.config.kioskDatasetIds) ? agg.config.kioskDatasetIds : [];
+                const kioskDatasets = await Promise.all(
+                    kioskDatasetIds.map((id) => getQueueDatasetById(orgId, id)),
+                );
+                const allowedQueues = kioskDatasets
+                    .map((d) => {
+                        const cfg = (d?.config ?? {}) as Record<string, unknown>;
+                        return typeof cfg.queueName === "string" ? normalizeQueueName(cfg.queueName) : null;
+                    })
+                    .filter((n): n is string => n !== null);
 
                 if (!allowedQueues.includes(targetQueue)) {
                     throw new Error("Coda non abilitata su questo kiosk");

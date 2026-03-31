@@ -18,15 +18,11 @@ function sanitizeSessionCookies(rawCookieHeader: string | null): string {
         .join("; ");
 }
 
-// Internal base URL for self-fetch in middleware (avoids looping through
-// nginx HTTPS when the Node server only listens on plain HTTP).
-const INTERNAL_ORIGIN =
-    process.env.NODE_ENV === "production"
-        ? `http://${process.env.HOSTNAME ?? "127.0.0.1"}:${process.env.PORT ?? "3000"}`
-        : undefined; // dev: use req.url as-is
-
 async function fetchSession(req: NextRequest, cookieHeader: string): Promise<unknown | null> {
-    const base = INTERNAL_ORIGIN ?? req.url;
+    // Always resolve against the current request origin.
+    // In production, forcing an internal http:// origin can invalidate
+    // secure auth cookies (`__Secure-*`) and cause false unauthenticated redirects.
+    const base = req.url;
     const candidates = ["/api/auth/get-session", "/api/auth/session"];
 
     for (const endpoint of candidates) {

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getOrgIdFromSession, withErrorHandler } from "@/lib/api-utils";
+import { connectDB } from "@/lib/db/connection";
+import { WebAppDatasetModel } from "@/lib/db/models/WebAppDataset";
 import { createQueueConnector } from "@/lib/services/queue-connector.service";
 
 function normalizeQueueName(value: string): string {
@@ -43,7 +45,7 @@ const createSchema = z.object({
 
 /**
  * POST /api/webapps/queue
- * Creates a new queue app instance (+ shared queue data if queueName is new).
+ * Creates a new queue app instance (+ dataset + queue data if queueName is new).
  */
 export const POST = withErrorHandler(async (req: NextRequest) => {
     const sess = await getOrgIdFromSession(req);
@@ -56,30 +58,87 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     }
 
     const { name, settings, defaultDurationMs } = parsed.data;
-    const normalizedSettings = {
-        ...settings,
-        queueName: normalizeQueueName(settings.queueName),
-        kioskQueueNames: settings.kioskQueueNames?.map((entry) => normalizeQueueName(entry)).filter(Boolean),
+    const normalizedQueueName = normalizeQueueName(settings.queueName);
+    const userId = sess.userId ?? "";
+
+    await connectDB();
+
+    // Ensure a dataset exists for each referenced queue name
+    async function ensureDataset(orgId: string, queueName: string, queueType: string, prefix?: string) {
+        const existing = await WebAppDatasetModel.findOne({
+            orgId,
+            appId: "queue",
+            "config.queueName": queueName,
+        }).lean();
+        if (existing) return String(existing._id);
+
+        const created = await WebAppDatasetModel.create({
+            orgId,
+            appId: "queue",
+            name: queueName,
+            slug: queueName,
+            status: "active",
+            schemaVersion: 1,
+            datasetKind: "queue",
+            editorMode: "custom-react",
+            storageMode: "app-collection",
+            config: { queueName, queueType, prefix: prefix ?? "" },
+            tags: ["queue"],
+            createdBy: userId,
+            updatedBy: userId,
+        });
+        return String(created._id);
+    }
+
+    // For kiosk: build kioskDatasetIds from kioskQueueNames
+    let datasetId: string;
+    let kioskDatasetIds: string[] | undefined;
+
+    if (settings.mode === "kiosk") {
+        const kioskQueues = (settings.kioskQueueNames ?? []).map((n) => normalizeQueueName(n)).filter(Boolean);
+        const ids = await Promise.all(
+            kioskQueues.map((qn) => ensureDataset(sess.orgId, qn, settings.queueType, settings.prefix)),
+        );
+        kioskDatasetIds = ids;
+        // For kiosk, primary datasetId is the first kiosk queue (or a dedicated one)
+        datasetId = ids[0] ?? await ensureDataset(sess.orgId, normalizedQueueName, settings.queueType, settings.prefix);
+    } else {
+        datasetId = await ensureDataset(sess.orgId, normalizedQueueName, settings.queueType, settings.prefix);
+    }
+
+    const instanceSettings = {
+        mode: settings.mode,
+        datasetId,
+        queueType: settings.queueType,
+        prefix: settings.prefix,
+        maxWaiting: settings.maxWaiting,
+        showWaitingCount: settings.showWaitingCount,
+        serviceMode: settings.serviceMode,
+        bookingEnabled: settings.bookingEnabled,
+        roundRobinMaxNumber: settings.roundRobinMaxNumber,
+        kioskDatasetIds,
+        waitingListLimit: settings.waitingListLimit,
+        accentColor: settings.accentColor,
     };
 
     const agg = await createQueueConnector({
         orgId: sess.orgId,
         userId: sess.userId ?? "",
         name,
-        settings: normalizedSettings,
+        settings: instanceSettings,
         defaultDurationMs,
     });
 
     const instanceId = String(agg.instance._id);
-    const playerUrl = `/webapps/queue/${instanceId}?token=${agg.instance.publicToken}&mode=${normalizedSettings.mode}`;
+    const playerUrl = `/webapps/queue/${instanceId}?token=${agg.instance.publicToken}&mode=${instanceSettings.mode}`;
 
     return NextResponse.json(
         {
             instanceId,
             contentId: agg.instance.contentId ? String(agg.instance.contentId) : null,
             playerUrl,
-            queueName: normalizedSettings.queueName,
-            mode: normalizedSettings.mode,
+            queueName: normalizedQueueName,
+            mode: instanceSettings.mode,
             name,
         },
         { status: 201 },

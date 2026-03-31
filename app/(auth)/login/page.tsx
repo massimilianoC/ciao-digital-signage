@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
@@ -14,17 +15,33 @@ type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
+  const handleResend = async () => {
+    if (!unverifiedEmail) return;
+    setResendStatus("sending");
+    const { error } = await authClient.sendVerificationEmail({
+      email: unverifiedEmail,
+      callbackURL: "/dashboard",
+    });
+    setResendStatus(error ? "error" : "sent");
+  };
+
   const onSubmit = async (data: FormData) => {
+    setUnverifiedEmail(null);
+    setResendStatus("idle");
     const { error } = await signIn.email({ email: data.email, password: data.password });
     if (error) {
-      const msg = error.code === "EMAIL_NOT_VERIFIED"
-        ? "Please verify your email before logging in. Check your inbox for a verification link."
-        : (error.message ?? "Invalid credentials");
-      setError("root", { message: msg });
+      if (error.code === "EMAIL_NOT_VERIFIED") {
+        setUnverifiedEmail(data.email);
+        setError("root", { message: "Please verify your email before logging in." });
+      } else {
+        setError("root", { message: error.message ?? "Invalid credentials" });
+      }
       return;
     }
 
@@ -61,6 +78,27 @@ export default function LoginPage() {
           {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
         </div>
         {errors.root && <p className="text-red-500 text-sm">{errors.root.message}</p>}
+        {unverifiedEmail && (
+          <div className="rounded border border-amber-300 bg-amber-50 dark:bg-amber-950 dark:border-amber-700 px-3 py-2 text-sm">
+            <p className="text-amber-800 dark:text-amber-300 mb-2">
+              Didn&apos;t receive the verification email?
+            </p>
+            {resendStatus === "sent" ? (
+              <p className="text-green-700 dark:text-green-400 font-medium">Verification email sent — check your inbox.</p>
+            ) : resendStatus === "error" ? (
+              <p className="text-red-600 dark:text-red-400">Failed to send. Try again later.</p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendStatus === "sending"}
+                className="text-blue-600 hover:underline disabled:opacity-50"
+              >
+                {resendStatus === "sending" ? "Sending…" : "Resend verification email"}
+              </button>
+            )}
+          </div>
+        )}
         <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50">
           {isSubmitting ? "Signing in..." : "Sign in"}
         </button>
