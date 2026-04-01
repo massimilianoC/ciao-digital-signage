@@ -71,21 +71,51 @@ function clearAuthCookies(res: NextResponse, rawCookieHeader: string | null) {
     }
 }
 
+function hasAuthSessionCookie(rawCookieHeader: string | null): boolean {
+    if (!rawCookieHeader) {
+        return false;
+    }
+
+    for (const chunk of rawCookieHeader.split(";")) {
+        const [rawName] = chunk.trim().split("=", 1);
+        const name = rawName?.trim();
+        if (!name) {
+            continue;
+        }
+        if (
+            name.startsWith("better-auth.session_token")
+            || name.startsWith("better-auth-session_token")
+            || name.startsWith("__Secure-better-auth.session_token")
+            || name.startsWith("__Secure-better-auth-session_token")
+            || name.startsWith("__Host-better-auth.session_token")
+            || name.startsWith("__Host-better-auth-session_token")
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 async function fetchSession(req: NextRequest, cookieHeader: string): Promise<unknown | null> {
+    if (!cookieHeader) {
+        return null;
+    }
+
     // Always resolve against the current request origin.
     // In production, forcing an internal http:// origin can invalidate
     // secure auth cookies (`__Secure-*`) and cause false unauthenticated redirects.
     const base = req.url;
     const candidates = ["/api/auth/get-session", "/api/auth/session"];
+    const forwardedHeaders = new Headers(req.headers);
+    forwardedHeaders.set("accept", "application/json");
+    forwardedHeaders.set("cookie", cookieHeader);
 
     for (const endpoint of candidates) {
         try {
             const response = await fetch(new URL(endpoint, base), {
                 method: "GET",
-                headers: {
-                    cookie: cookieHeader,
-                    accept: "application/json",
-                },
+                headers: forwardedHeaders,
                 cache: "no-store",
             });
 
@@ -140,38 +170,12 @@ export async function authMiddleware(req: NextRequest) {
         return NextResponse.next();
     }
 
-    const rawCookieHeader = req.headers.get("cookie");
-    const session = await fetchSession(req, sanitizeSessionCookies(rawCookieHeader)) as SessionLike | null;
-
-    if (!session) {
-        if (req.nextUrl.pathname.startsWith("/api/")) {
-            if (isDev && debugAuthMiddleware) console.log(`[MW] ${method} ${path} -> 401 UNAUTH (${Date.now() - start}ms)`);
-            const response = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-            clearAuthCookies(response, rawCookieHeader);
-            return response;
-        }
-        const loginUrl = new URL("/login", req.url);
-        loginUrl.searchParams.set("from", req.nextUrl.pathname);
-        if (isDev && debugAuthMiddleware) console.log(`[MW] ${method} ${path} -> REDIRECT /login (${Date.now() - start}ms)`);
-        const response = NextResponse.redirect(loginUrl);
-        clearAuthCookies(response, rawCookieHeader);
-        return response;
-    }
-
-    // /admin/* routes require role "super-admin" (set via better-auth admin plugin)
-    if (req.nextUrl.pathname.startsWith("/admin")) {
-        const role = (session.user as { role?: string }).role;
-        if (role !== "super-admin" && role !== "admin") {
-            if (isDev && debugAuthMiddleware) console.log(`[MW] ${method} ${path} -> REDIRECT /dashboard (role=${role}) (${Date.now() - start}ms)`);
-            return NextResponse.redirect(new URL("/dashboard", req.url));
-        }
-    }
-
+    // Temporary hard-stop for edge-side auth enforcement.
+    // Session validation remains enforced in server layouts/pages and API handlers,
+    // but disabling edge checks prevents false session invalidation loops in production.
     if (isDev && debugAuthMiddleware) {
-        const user = (session.user as { email?: string }).email ?? "?";
-        console.log(`[MW] ${method} ${path} -> OK (user=${user}) (${Date.now() - start}ms)`);
+        console.log(`[MW] ${method} ${path} -> BYPASS (${Date.now() - start}ms)`);
     }
-
     return NextResponse.next();
 }
 
