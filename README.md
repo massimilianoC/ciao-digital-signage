@@ -46,6 +46,22 @@ npm run dev
 
 Open [http://localhost:3100](http://localhost:3100).
 
+### Seed Sample Users
+
+The repository includes a contributor-safe sample user seed for local testing:
+
+```bash
+npm run seed:users
+```
+
+Recommended workflow:
+
+- Copy values from [TEST-USERS.env.example](TEST-USERS.env.example) into your private [TEST-USERS.env.local](TEST-USERS.env.local) or `.env.local`.
+- `TEST-USERS.env.local` is intended for your personal seeded local users and is gitignored.
+- Set explicit sample passwords for predictable local logins.
+- Use `SEED_ALLOW_PLACEHOLDER_PASSWORDS=true` only for disposable local setups where generated passwords are acceptable.
+- Do not use the sample seed or sample credentials for shared, staging, or production environments.
+
 ### Local Port Convention
 
 - Default app port is 3100.

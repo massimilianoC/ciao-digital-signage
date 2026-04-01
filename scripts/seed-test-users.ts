@@ -1,10 +1,34 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import { MongoClient, ObjectId } from "mongodb";
+import crypto from "node:crypto";
+
+dotenv.config();
+dotenv.config({ path: ".env.local", override: false });
+dotenv.config({ path: "TEST-USERS.env.local", override: true });
 
 const BASE_URL = process.env.APP_URL ?? "http://localhost:3000";
 const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://localhost:27017/ciao";
-const ORG_NAME = process.env.TEST_ORG_NAME ?? "Ciao Demo";
-const ORG_SLUG = process.env.TEST_ORG_SLUG ?? "ciao-demo";
+const ORG_NAME = process.env.TEST_ORG_NAME ?? "Demo Organization";
+const ORG_SLUG = process.env.TEST_ORG_SLUG ?? "demo-organization";
+const ALLOW_GENERATED_PASSWORDS = process.env.SEED_ALLOW_PLACEHOLDER_PASSWORDS === "true";
+
+const generatedPasswords = new Map<string, string>();
+
+function resolvePassword(envKey: string, label: string): string {
+    const value = process.env[envKey]?.trim();
+    if (value) return value;
+
+    if (!ALLOW_GENERATED_PASSWORDS) {
+        throw new Error(
+            `Missing ${envKey}. Set ${envKey} explicitly or opt in with SEED_ALLOW_PLACEHOLDER_PASSWORDS=true for disposable local seeds.`,
+        );
+    }
+
+    // Public-repo safe fallback: generate a strong random password at runtime.
+    const generated = `Tmp_${crypto.randomBytes(12).toString("base64url")}`;
+    generatedPasswords.set(label, generated);
+    return generated;
+}
 
 type TestUser = {
     key: string;
@@ -18,29 +42,35 @@ type TestUser = {
 const TEST_USERS: TestUser[] = [
     {
         key: "SUPER_ADMIN",
-        name: "Super Admin",
-        email: process.env.SUPER_ADMIN_EMAIL ?? "admin@ciao.local",
-        password: process.env.SUPER_ADMIN_PASSWORD ?? "Admin123!",
+        name: "Sample Super Admin",
+        email: process.env.SUPER_ADMIN_EMAIL ?? "super-admin@example.test",
+        password: resolvePassword("SUPER_ADMIN_PASSWORD", "SUPER_ADMIN"),
         appRole: "super-admin",
         orgMemberRole: "owner",
     },
     {
         key: "ORG_ADMIN",
-        name: "Org Admin",
-        email: process.env.ORG_ADMIN_EMAIL ?? "org-admin@ciao.local",
-        password: process.env.ORG_ADMIN_PASSWORD ?? "Admin123!",
+        name: "Sample Org Admin",
+        email: process.env.ORG_ADMIN_EMAIL ?? "org-admin@example.test",
+        password: resolvePassword("ORG_ADMIN_PASSWORD", "ORG_ADMIN"),
         appRole: "admin",
         orgMemberRole: "owner",
     },
     {
         key: "ORG_MEMBER",
-        name: "Org Member",
-        email: process.env.ORG_MEMBER_EMAIL ?? "org-member@ciao.local",
-        password: process.env.ORG_MEMBER_PASSWORD ?? "Admin123!",
+        name: "Sample Org Member",
+        email: process.env.ORG_MEMBER_EMAIL ?? "org-member@example.test",
+        password: resolvePassword("ORG_MEMBER_PASSWORD", "ORG_MEMBER"),
         appRole: "member",
         orgMemberRole: "member",
     },
 ];
+
+function hashPassword(password: string): string {
+    const salt = crypto.randomBytes(16).toString("hex");
+    const derived = crypto.scryptSync(password, salt, 64).toString("hex");
+    return `${salt}:${derived}`;
+}
 
 async function signUpIfMissing(user: TestUser): Promise<void> {
     const payload = { email: user.email, password: user.password, name: user.name };
@@ -113,6 +143,7 @@ async function ensureRoleAndMembership(
     user: TestUser,
 ): Promise<void> {
     const usersCol = db.collection("user");
+    const accountsCol = db.collection("account");
     const membersCol = db.collection("member");
 
     const dbUser = await usersCol.findOne({ email: user.email });
@@ -130,6 +161,34 @@ async function ensureRoleAndMembership(
             },
         },
     );
+
+    const expectedPassword = hashPassword(user.password);
+    const existingAccount = await accountsCol.findOne({ providerId: "credential", userId: dbUser._id.toString() });
+    if (!existingAccount) {
+        await accountsCol.insertOne({
+            _id: new ObjectId(),
+            accountId: dbUser._id.toString(),
+            providerId: "credential",
+            userId: dbUser._id.toString(),
+            password: expectedPassword,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+        console.log(`✅ credential account created: ${user.email}`);
+    } else {
+        await accountsCol.updateOne(
+            { _id: existingAccount._id },
+            {
+                $set: {
+                    accountId: dbUser._id.toString(),
+                    userId: dbUser._id.toString(),
+                    password: expectedPassword,
+                    updatedAt: new Date(),
+                },
+            },
+        );
+        console.log(`✅ credential account synced: ${user.email}`);
+    }
 
     const existingMember = await membersCol.findOne({ organizationId: orgId, userId: dbUser._id.toString() });
     if (!existingMember) {
@@ -182,7 +241,14 @@ async function main() {
     console.log("═".repeat(64));
     console.log(` ORG: ${ORG_NAME} (${ORG_SLUG})`);
     for (const user of TEST_USERS) {
-        console.log(` ${user.key}: ${user.email} / ${user.password}  [appRole=${user.appRole}]`);
+        console.log(` ${user.key}: ${user.email}  [appRole=${user.appRole}]`);
+    }
+
+    if (generatedPasswords.size > 0) {
+        console.log("\n Generated passwords (set env vars to persist your own values):");
+        for (const [label, password] of generatedPasswords.entries()) {
+            console.log(` ${label}_PASSWORD=${password}`);
+        }
     }
     console.log("═".repeat(64) + "\n");
 }

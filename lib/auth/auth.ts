@@ -67,6 +67,12 @@ export const auth = betterAuth({
         html: `<p>Click to reset your password: <a href="${url}">${url}</a></p>`,
       });
     },
+  },
+  // emailVerification is the dedicated Better Auth namespace consumed by the
+  // standalone /send-verification-email endpoint (authClient.sendVerificationEmail).
+  // emailAndPassword.sendVerificationEmail only fires during registration;
+  // the resend flow requires this separate entry point.
+  emailVerification: {
     sendVerificationEmail: async ({ user, url }: { user: { email: string }; url: string }) => {
       await smtpTransport.sendMail({
         from: process.env.SMTP_FROM ?? "noreply@ciao.local",

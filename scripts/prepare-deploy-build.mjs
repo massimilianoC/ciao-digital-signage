@@ -17,7 +17,6 @@ const filesToCopy = [
 ];
 
 const dirsToCopy = [
-    ".next",
     "public",
     "lib/socket",
     "infra/apache",
@@ -101,7 +100,12 @@ async function writeDeployGuide() {
 
 async function main() {
     console.log("[1/4] Clean build directory");
-    await rm(buildDir, { recursive: true, force: true });
+    try {
+        await rm(buildDir, { recursive: true, force: true });
+    } catch (err) {
+        if (err.code !== "EBUSY" && err.code !== "EPERM") throw err;
+        console.warn(`[1/4] Warning: could not fully clean build dir (${err.code}), continuing...`);
+    }
     await mkdir(buildDir, { recursive: true });
 
     console.log("[2/4] Run production build");
