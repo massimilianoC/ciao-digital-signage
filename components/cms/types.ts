@@ -29,10 +29,12 @@ export interface PlaylistItem {
   contentId: string;
   name: string;
   type: "image" | "video" | "url" | "widget";
+  urlSubtype?: "youtube" | "video" | "image" | "pdf" | "webpage";
   thumbnailUrl?: string;
   previewUrl?: string;
   fileSizeBytes?: number;
   fitMode?: "cover" | "fit";
   backgroundColor?: string | null;
   durationSeconds: number;
+  durationOverride?: boolean;
 }

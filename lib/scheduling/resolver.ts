@@ -35,6 +35,7 @@ export interface ContentManifest {
     url?: string;
     config?: Record<string, unknown>;
     durationMs: number;
+    durationOverride?: boolean;
   }>;
   validFrom: string;
   validUntil: string | null;

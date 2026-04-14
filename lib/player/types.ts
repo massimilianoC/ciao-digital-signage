@@ -15,6 +15,7 @@ export interface ContentItem {
   fitMode?: "cover" | "fit";
   backgroundColor?: string | null;
   durationMs: number;
+  durationOverride?: boolean;
   label?: string;
 }
 

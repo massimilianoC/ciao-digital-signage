@@ -134,6 +134,11 @@ function createSchedulingDb(): SchedulingDb {
             ? content.config.fileUrl
             : undefined;
 
+        const isVideoLike =
+          content.type === "video" ||
+          (content.type === "url" && content.config.urlSubtype === "video");
+        const hasDurationOverride = playlistItem.durationOverride === true;
+
         resolvedItems.push({
           contentId: content._id.toString(),
           title: playlistItem.title ?? content.name,
@@ -146,6 +151,7 @@ function createSchedulingDb(): SchedulingDb {
           url: content.config.url,
           config: content.config,
           durationMs: playlistItem.durationMs ?? content.defaultDurationMs,
+          durationOverride: isVideoLike ? hasDurationOverride : true,
         });
       }
 

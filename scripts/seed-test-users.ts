@@ -66,12 +66,6 @@ const TEST_USERS: TestUser[] = [
     },
 ];
 
-function hashPassword(password: string): string {
-    const salt = crypto.randomBytes(16).toString("hex");
-    const derived = crypto.scryptSync(password, salt, 64).toString("hex");
-    return `${salt}:${derived}`;
-}
-
 async function signUpIfMissing(user: TestUser): Promise<void> {
     const payload = { email: user.email, password: user.password, name: user.name };
     const resp = await fetch(`${BASE_URL}/api/auth/sign-up/email`, {
@@ -146,9 +140,27 @@ async function ensureRoleAndMembership(
     const accountsCol = db.collection("account");
     const membersCol = db.collection("member");
 
-    const dbUser = await usersCol.findOne({ email: user.email });
+    let dbUser = await usersCol.findOne({ email: user.email });
     if (!dbUser) {
         throw new Error(`User not found after sign-up: ${user.email}`);
+    }
+
+    const existingAccount = await accountsCol.findOne({ providerId: "credential", userId: dbUser._id.toString() });
+    if (!existingAccount) {
+        // Recovery path for broken local seeds: recreate the user through Better Auth so
+        // password hashing stays fully compatible with the auth runtime.
+        await accountsCol.deleteMany({ userId: dbUser._id.toString() });
+        await membersCol.deleteMany({ userId: dbUser._id.toString() });
+        await usersCol.deleteOne({ _id: dbUser._id });
+
+        await signUpIfMissing(user);
+
+        dbUser = await usersCol.findOne({ email: user.email });
+        if (!dbUser) {
+            throw new Error(`User recreation failed during recovery: ${user.email}`);
+        }
+
+        console.log(`✅ credential account recovered via auth API: ${user.email}`);
     }
 
     await usersCol.updateOne(
@@ -161,34 +173,6 @@ async function ensureRoleAndMembership(
             },
         },
     );
-
-    const expectedPassword = hashPassword(user.password);
-    const existingAccount = await accountsCol.findOne({ providerId: "credential", userId: dbUser._id.toString() });
-    if (!existingAccount) {
-        await accountsCol.insertOne({
-            _id: new ObjectId(),
-            accountId: dbUser._id.toString(),
-            providerId: "credential",
-            userId: dbUser._id.toString(),
-            password: expectedPassword,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        });
-        console.log(`✅ credential account created: ${user.email}`);
-    } else {
-        await accountsCol.updateOne(
-            { _id: existingAccount._id },
-            {
-                $set: {
-                    accountId: dbUser._id.toString(),
-                    userId: dbUser._id.toString(),
-                    password: expectedPassword,
-                    updatedAt: new Date(),
-                },
-            },
-        );
-        console.log(`✅ credential account synced: ${user.email}`);
-    }
 
     const existingMember = await membersCol.findOne({ organizationId: orgId, userId: dbUser._id.toString() });
     if (!existingMember) {

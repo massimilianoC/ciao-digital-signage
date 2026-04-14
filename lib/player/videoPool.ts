@@ -30,17 +30,50 @@ export class VideoPool {
     this.initialized = true;
   }
 
-  assign(slotIndex: number, src: string): HTMLVideoElement {
+  private assertReady(): void {
     if (!this.initialized) {
-      throw new Error("VideoPool: call init() before assign()");
+      throw new Error("VideoPool: call init() before using slots");
     }
+  }
+
+  private getRequiredSlot(slotIndex: number): HTMLVideoElement {
+    this.assertReady();
 
     const slot = this.slots[slotIndex];
     if (!slot) {
       throw new Error(`VideoPool: slot ${slotIndex} does not exist`);
     }
 
-    slot.src = src;
+    return slot;
+  }
+
+  private normalizeSrc(src: string): string {
+    try {
+      return new URL(src, window.location.href).href;
+    } catch {
+      return src;
+    }
+  }
+
+  prepare(slotIndex: number, src: string): HTMLVideoElement {
+    const slot = this.getRequiredSlot(slotIndex);
+    const nextSrc = this.normalizeSrc(src);
+    const currentSrc = this.normalizeSrc(slot.getAttribute("src") || "");
+
+    if (currentSrc !== nextSrc) {
+      slot.src = nextSrc;
+      slot.load();
+    } else if (slot.networkState === HTMLMediaElement.NETWORK_EMPTY) {
+      // Same source but media pipeline was reset: explicitly reload.
+      slot.load();
+    }
+
+    slot.style.display = "none";
+    return slot;
+  }
+
+  assign(slotIndex: number, src: string): HTMLVideoElement {
+    const slot = this.prepare(slotIndex, src);
     slot.style.display = "block";
     return slot;
   }

@@ -64,6 +64,37 @@ function printLinks(baseUrl) {
     console.log("════════════════════════════════════════════════════════════\n");
 }
 
+function shouldRewriteLocalhostUrl(rawValue) {
+    if (!rawValue) {
+        return true;
+    }
+
+    try {
+        const parsed = new URL(rawValue);
+        return parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    } catch {
+        return false;
+    }
+}
+
+function normalizeLocalAuthUrl(rawValue, selectedPort) {
+    const fallback = `http://localhost:${selectedPort}`;
+    if (!rawValue) {
+        return fallback;
+    }
+
+    try {
+        const parsed = new URL(rawValue);
+        if (parsed.hostname !== "localhost" && parsed.hostname !== "127.0.0.1") {
+            return rawValue;
+        }
+        parsed.port = String(selectedPort);
+        return parsed.toString().replace(/\/$/, "");
+    } catch {
+        return fallback;
+    }
+}
+
 async function waitForHealth(baseUrl, timeoutMs = 45000) {
     const startedAt = Date.now();
     let attempts = 0;
@@ -120,12 +151,29 @@ async function main() {
     const baseUrl = `http://${host}:${selectedPort}`;
     console.log(`\n[dev-start] Starting server process on ${baseUrl}...`);
 
+    const resolvedBetterAuthUrl = shouldRewriteLocalhostUrl(process.env.BETTER_AUTH_URL)
+        ? normalizeLocalAuthUrl(process.env.BETTER_AUTH_URL, selectedPort)
+        : process.env.BETTER_AUTH_URL;
+
+    const resolvedPublicAppUrl = shouldRewriteLocalhostUrl(process.env.NEXT_PUBLIC_APP_URL)
+        ? normalizeLocalAuthUrl(process.env.NEXT_PUBLIC_APP_URL, selectedPort)
+        : process.env.NEXT_PUBLIC_APP_URL;
+
+    if (resolvedBetterAuthUrl) {
+        console.log(`[dev-start] Using BETTER_AUTH_URL=${resolvedBetterAuthUrl}`);
+    }
+    if (resolvedPublicAppUrl) {
+        console.log(`[dev-start] Using NEXT_PUBLIC_APP_URL=${resolvedPublicAppUrl}`);
+    }
+
     const child = spawn(process.execPath, ["server.js"], {
         stdio: "inherit",
         env: {
             ...process.env,
             PORT: String(selectedPort),
             HOSTNAME: host,
+            BETTER_AUTH_URL: resolvedBetterAuthUrl,
+            NEXT_PUBLIC_APP_URL: resolvedPublicAppUrl,
         },
     });
 

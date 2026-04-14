@@ -33,6 +33,14 @@ type DeviceInfo = {
   helpEmail: string;
 };
 
+function isVideoLikeItem(item: { type: string; urlSubtype?: string } | null | undefined): boolean {
+  if (!item) {
+    return false;
+  }
+
+  return item.type === "video" || (item.type === "url" && item.urlSubtype === "video");
+}
+
 function isSamePlaybackProgram(
   currentManifest: PlayerSnapshot["context"]["manifest"],
   nextManifest: PlayerSnapshot["context"]["manifest"],
@@ -87,7 +95,8 @@ function isSamePlaybackProgram(
       currentItem.interactive !== nextItem.interactive ||
       currentItem.fitMode !== nextItem.fitMode ||
       currentItem.backgroundColor !== nextItem.backgroundColor ||
-      currentItem.durationMs !== nextItem.durationMs
+      currentItem.durationMs !== nextItem.durationMs ||
+      (currentItem.durationOverride ?? true) !== (nextItem.durationOverride ?? true)
     ) {
       return false;
     }
@@ -176,6 +185,14 @@ export function PlayerRoot({ screenId, token, previewMode = false }: PlayerRootP
       return;
     }
 
+    const shouldUseTimer =
+      !isVideoLikeItem(currentItem) || currentItem.durationOverride === true;
+
+    if (!shouldUseTimer) {
+      workerRef.current.postMessage({ type: "CANCEL" });
+      return;
+    }
+
     workerRef.current.postMessage({
       type: "START",
       itemId: currentItem.id,
@@ -186,6 +203,45 @@ export function PlayerRoot({ screenId, token, previewMode = false }: PlayerRootP
       workerRef.current?.postMessage({ type: "CANCEL" });
     };
   }, [currentItemIndex, manifest, playbackState]);
+
+  useEffect(() => {
+    if (!manifest || manifest.items.length < 2) {
+      return;
+    }
+
+    const currentItem = manifest.items[currentItemIndex] ?? manifest.items[0];
+    if (!currentItem) {
+      return;
+    }
+
+    const nextIndex = currentItemIndex + 1;
+    const canAdvance = nextIndex < manifest.items.length || (manifest.loop ?? true);
+    if (!canAdvance) {
+      return;
+    }
+
+    const normalizedNextIndex = nextIndex < manifest.items.length ? nextIndex : 0;
+    if (normalizedNextIndex === currentItemIndex) {
+      return;
+    }
+
+    const nextItem = manifest.items[normalizedNextIndex];
+
+    if (!nextItem?.url) {
+      return;
+    }
+
+    if (isVideoLikeItem(nextItem)) {
+      const nextSlotIndex = normalizedNextIndex % 2;
+      videoPool.prepare(nextSlotIndex, nextItem.url);
+      return;
+    }
+
+    if (nextItem.type === "image" || (nextItem.type === "url" && nextItem.urlSubtype === "image")) {
+      const image = new Image();
+      image.src = nextItem.url;
+    }
+  }, [currentItemIndex, manifest]);
 
   useEffect(() => {
     let cancelled = false;
@@ -515,6 +571,12 @@ export function PlayerRoot({ screenId, token, previewMode = false }: PlayerRootP
     actorRef.send({ type: "LOAD_ERROR" });
   }, [actorRef]);
 
+  const handleVideoEnded = useCallback(() => {
+    if (playbackStateRef.current === "playing") {
+      actorRef.send({ type: "ITEM_TIMER_EXPIRED" });
+    }
+  }, [actorRef]);
+
   const uniqueCode = screenId;
   const monitorName = deviceInfo?.name || `Monitor ${screenId.slice(-6)}`;
   const helpEmail = deviceInfo?.helpEmail || "support@ciao.local";
@@ -540,8 +602,10 @@ export function PlayerRoot({ screenId, token, previewMode = false }: PlayerRootP
           key={`${manifest?.scheduleId ?? "manifest"}-${currentItemIndex}-${renderCycle}`}
           manifest={manifest}
           currentItemIndex={currentItemIndex}
+          videoSlotIndex={currentItemIndex % 2}
           onLoad={handleLoad}
           onError={handleError}
+          onVideoEnded={handleVideoEnded}
           screenId={screenId}
           screenToken={token}
           previewMode={previewMode}

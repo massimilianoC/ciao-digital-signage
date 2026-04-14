@@ -33,8 +33,10 @@ function toYoutubeEmbedUrl(rawUrl: string): string {
 interface ContentRendererProps {
   manifest: ContentManifest | null;
   currentItemIndex: number;
+  videoSlotIndex?: number;
   onLoad: () => void;
   onError: () => void;
+  onVideoEnded?: () => void;
   screenId?: string;
   screenToken?: string;
   previewMode?: boolean;
@@ -43,8 +45,10 @@ interface ContentRendererProps {
 export function ContentRenderer({
   manifest,
   currentItemIndex,
+  videoSlotIndex,
   onLoad,
   onError,
+  onVideoEnded,
   screenId,
   screenToken,
   previewMode = false,
@@ -60,6 +64,14 @@ export function ContentRenderer({
 
   const effectiveBackgroundColor = item.backgroundColor ?? manifest.backgroundColorOverride ?? "#000000";
 
+  const isVideoLike = item.type === "video" || (item.type === "url" && item.urlSubtype === "video");
+  const shouldLoopVideo =
+    isVideoLike &&
+    manifest.items.length === 1 &&
+    (manifest.loop ?? true) &&
+    !(manifest.stopOnLastItem ?? false) &&
+    item.durationOverride !== true;
+
   let rendered: ReactElement | null = null;
 
   switch (item.type) {
@@ -74,7 +86,16 @@ export function ContentRenderer({
       );
       break;
     case "video":
-      rendered = <VideoRenderer url={item.url} onLoad={onLoad} onError={onError} />;
+      rendered = (
+        <VideoRenderer
+          url={item.url}
+          slotIndex={videoSlotIndex}
+          onLoad={onLoad}
+          onError={onError}
+          onEnded={item.durationOverride === true ? undefined : onVideoEnded}
+          loop={shouldLoopVideo}
+        />
+      );
       break;
     case "url": {
       const sub = item.urlSubtype ?? "webpage";
@@ -89,7 +110,16 @@ export function ContentRenderer({
           />
         );
       } else if (sub === "video") {
-        rendered = <VideoRenderer url={item.url} onLoad={onLoad} onError={onError} />;
+        rendered = (
+          <VideoRenderer
+            url={item.url}
+            slotIndex={videoSlotIndex}
+            onLoad={onLoad}
+            onError={onError}
+            onEnded={item.durationOverride === true ? undefined : onVideoEnded}
+            loop={shouldLoopVideo}
+          />
+        );
       } else if (sub === "image") {
         rendered = (
           <ImageRenderer

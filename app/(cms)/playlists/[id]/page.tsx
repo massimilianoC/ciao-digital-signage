@@ -45,9 +45,11 @@ type PlaylistWithPopulatedItems = {
           config?: {
             fileUrl?: string;
             fileSizeBytes?: number;
+            urlSubtype?: "youtube" | "video" | "image" | "pdf" | "webpage";
           };
         };
     durationMs?: number | null;
+    durationOverride?: boolean;
   }>;
 };
 
@@ -111,12 +113,14 @@ function mapPlaylistItems(data: PlaylistWithPopulatedItems["items"]): PlaylistIt
       contentId,
       name: item.title ? toPlainString(item.title) : populated?.name ? toPlainString(populated.name) : `Item ${index + 1}`,
       type: populated?.type ?? "image",
+      urlSubtype: populated?.config?.urlSubtype,
       thumbnailUrl: normalizeAssetUrl(item.thumbnailUrl) ?? normalizeAssetUrl(populated?.thumbnailUrl),
       previewUrl: normalizeAssetUrl(populated?.config?.fileUrl),
       fileSizeBytes: toByteSize(populated?.config?.fileSizeBytes),
       fitMode: item.fitMode === "fit" ? "fit" : "cover",
       backgroundColor: typeof item.backgroundColor === "string" ? item.backgroundColor : null,
       durationSeconds: Math.max(1, Math.round((item.durationMs ?? 10000) / 1000)),
+      durationOverride: item.durationOverride === true,
     };
   });
 }

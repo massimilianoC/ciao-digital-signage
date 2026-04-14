@@ -33,6 +33,7 @@ const replaceItemsSchema = z.object({
       fitMode: z.enum(["cover", "fit"]).optional(),
       backgroundColor: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/).nullable().optional(),
       durationMs: z.number().int().min(500).nullable().optional(),
+      durationOverride: z.boolean().optional(),
     }),
   ),
 });
@@ -229,6 +230,7 @@ export const PATCH = withErrorHandler(async (req: NextRequest, { params }: Param
       fitMode: item.fitMode,
       backgroundColor: item.backgroundColor,
       durationMs: item.durationMs,
+      durationOverride: item.durationOverride,
       order: index,
     })),
   );

@@ -52,6 +52,18 @@ TEST-USERS.env.local
 PIANO-ATTIVITA.md
 docs/DEPLOY-PRODUCTION.md
 
+# internal/operational docs — not part of public documentation
+docs/matkering/
+docs/COMMUNICATION-HANDOFF.md
+docs/NEW-REPO-LAUNCH.md
+docs/TRANSLATION-GUIDE.md
+docs/webapps/WEBAPPS-TODO.md
+docs/webapp-sdk/DATASET-SANDBOXED-IMPLEMENTATION-REPORT.md
+docs/architecture/AI-AUTOMATION-LAYER.md
+docs/architecture/FEATURE-SANDBOXING-BLUEPRINT.md
+docs/architecture/DEPLOYMENT.md
+docs/it/
+
 # AI assistant local config (machine-specific, never committed)
 .claude/
 

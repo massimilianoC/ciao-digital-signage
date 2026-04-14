@@ -21,22 +21,21 @@ Ciao is a **multi-tenant digital signage platform** with:
 
 | Layer | Technology | Status |
 |-------|----------|--------|
-| **Frontend (Player)** | Next.js App Router, React, Tailwind | ✅ Complete |
-| **Frontend (CMS)** | Next.js Pages, React, Shadcn components | ✅ Complete |
+| **Frontend (Player)** | Next.js App Router, React 19, Tailwind CSS 4 | ✅ Complete |
+| **Frontend (CMS)** | Next.js App Router, React 19, Shadcn components | ✅ Complete |
 | **Backend API** | Next.js API Routes | ✅ Complete |
-| **Real-Time** | Socket.IO (Node.js server.js) | ✅ Complete |
-| **Database** | MongoDB, Mongoose ODM | ✅ Complete |
-| **Auth** | NextAuth.js, Multi-tenant sessions | ✅ Complete |
+| **Real-Time** | Socket.IO (Node.js custom server) | ✅ Complete |
+| **Database** | MongoDB 7+, Mongoose ODM | ✅ Complete |
+| **Auth** | better-auth — multi-tenant sessions + email/password | ✅ Complete |
 | **File Storage** | Local `/public/uploads/`, `/public/thumbnails/` | ✅ Complete |
 
 ## Platform Phases
 
 ### Phase 1: Foundation (Auth + Multi-Tenancy)
 
-- ✅ NextAuth.js integration with org isolation
+- ✅ better-auth integration with org isolation
 - ✅ MongoDB org namespace enforcement
 - ✅ Session context on all routes
-- **Doc**: [01-auth-multi-tenant.md](../01-platform/01-auth-multi-tenant.md)
 
 ### Phase 2: Core Content
 
@@ -44,14 +43,12 @@ Ciao is a **multi-tenant digital signage platform** with:
 - ✅ File upload with thumbnails
 - ✅ Screen pairing + group assignment
 - ✅ Playlist management (add/remove items)
-- **Doc**: [02-content-mgmt.md](../01-platform/02-content-mgmt.md)
 
 ### Phase 3: Scheduling
 
 - ✅ Screen scheduling with FSM (idle→playing→parking)
 - ✅ Priority resolver (fixed > recurring > default)
 - ✅ Schedule CRUD in CMS
-- **Doc**: [03-scheduling.md](../01-platform/03-scheduling.md)
 
 ### Phase 4: Real-Time Sync
 
@@ -59,14 +56,12 @@ Ciao is a **multi-tenant digital signage platform** with:
 - ✅ Player heartbeat + presence tracking
 - ✅ Admin override commands (force-play, clear)
 - ✅ Connectivity FSM (initialize→online→offline)
-- **Doc**: [04-real-time.md](../01-platform/04-real-time.md)
 
 ### Phase 5: Browser Player
 
 - ✅ Fullscreen rendering
 - ✅ Content cycling + transitions
 - ✅ Responsive layout
-- **Doc**: [05-player.md](../01-platform/05-player.md)
 
 ### Phase 6: CMS Dashboard
 
@@ -74,7 +69,6 @@ Ciao is a **multi-tenant digital signage platform** with:
 - ✅ Global breadcrumb policy in shared CMS layout
 - ✅ Dashboard metrics + screen status
 - ✅ CRUD pages (content, playlist, schedule, screen)
-- **Doc**: [06-cms.md](../01-platform/06-cms.md)
 
 ### CMS Navigation Policy
 
@@ -89,7 +83,6 @@ Ciao is a **multi-tenant digital signage platform** with:
 - ✅ PDF/YouTube content support
 - ✅ Lifecycle scheduling (active/parking)
 - ✅ Screen connectivity visualization
-- **Doc**: [07-frontend-specs.md](../01-platform/07-frontend-specs.md)
 
 ## Data Model (Simplified)
 
@@ -129,7 +122,6 @@ Ciao is a **multi-tenant digital signage platform** with:
 
 - Pro: Single MongoDB instance, simpler ops, cost-effective
 - Con: No hard isolation (must enforce in code)
-- **Reference**: `.planning/PROJECT.md` > Multi-Tenancy Model
 
 ### Scheduling Priority Resolver
 
@@ -137,7 +129,6 @@ Ciao is a **multi-tenant digital signage platform** with:
 
 - Pro: Deterministic, client-predictable
 - Con: Requires FSM (idle→playing→parking)
-- **Reference**: [03-scheduling.md](../01-platform/03-scheduling.md)
 
 ### Real-Time Sync (not pull-based)
 
@@ -145,7 +136,6 @@ Ciao is a **multi-tenant digital signage platform** with:
 
 - Pro: Live updates, immediate override response
 - Con: Idle connections use minimal bandwidth (heartbeat only)
-- **Reference**: [04-real-time.md](../01-platform/04-real-time.md)
 
 ### Webapp Framework
 
@@ -158,10 +148,11 @@ Ciao is a **multi-tenant digital signage platform** with:
 
 ## Deployment
 
-- **Development**: `npm run mvp:start` on localhost:3100
-- **Production**: Vercel (Next.js) + Railway (MongoDB)
-  - **Reference**: [DEPLOYMENT.md](./DEPLOYMENT.md)
-  - Not yet implemented — task pending
+- **Development**: `npm run dev` on [localhost:3100](http://localhost:3100)
+- **Production**: Self-hosted Linux server with a custom Node.js process manager.
+  Apache reverse proxy supported — see `infra/apache/` for vhost templates.
+  Docker Compose variants available in `infra/docker/`.
+  Full deployment guide: [docs/DEPLOY-PRODUCTION.md](../DEPLOY-PRODUCTION.md) (internal)
 
 ## Security
 

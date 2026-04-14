@@ -1,8 +1,8 @@
-# Ciao Digital Signage
+# Ciao Signage — Your Own Personal TV
 
-**Open-source digital signage platform** — manage screens, content, playlists,
-schedules, and webapp connectors from a single multi-tenant CMS, with a
-browser-based player that updates in real-time.
+**Ciao Ciao** to proprietary players, expensive licenses, and Windows boxes
+that freeze mid-presentation. **Hello** to a fully open, browser-native digital
+signage platform you own, control, and extend — on any screen, in five minutes.
 
 [![Version](https://img.shields.io/badge/version-0.2.1--alpha-blue)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0-lightgrey)](LICENSE)
@@ -11,29 +11,58 @@ browser-based player that updates in real-time.
 
 ---
 
-## What Is Ciao?
+## What Is Ciao Signage?
 
-Ciao is a self-hostable digital signage platform built on modern web standards.
-It targets Chrome-based displays and kiosk devices, and lets you manage
-everything — from a single screen to an entire fleet — through a web-based CMS.
+Point any Chrome browser at a URL. That screen is now yours — managed in
+real-time from a web CMS, no software to install, no proprietary hardware,
+no vendor lock-in. Welcome to **your own personal TV**.
 
-**Key capabilities:**
+Whether you run one screen in a café or a fleet of hundreds across multiple
+locations, Ciao Signage gives you the same professional toolbox — completely
+self-hostable, completely open.
 
-- 🖥️ **Multi-tenant CMS** — screens, content items, playlists, and schedules
-  with per-organisation isolation.
-- 📡 **Real-time player runtime** — Socket.IO push updates; the player reacts
-  instantly to CMS changes without page reloads.
-- 🔌 **Webapp connector model** — embed any web app inside the player via a
-  lightweight SDK handshake; no native plugins required.
+**What you get out of the box:**
+
+- 🖥️ **Multi-tenant CMS** — screens, content, playlists and schedules, each
+  organisation sees only its own data.
+- 📡 **Real-time player** — Socket.IO manifest delivery; change something in
+  the CMS and every screen reacts instantly, no polling, no reload.
+- 🔌 **Webapp SDK** — embed any interactive web app inside a screen zone via
+  a lightweight SDK. Calendars, queues, dashboards, kiosk UIs — all schedulable
+  like normal content. No native plugin required.
+- 🧩 **Composite layouts** — split any screen into independent zones, each
+  with its own content and schedule.
 - 🔐 **Auth & roles** — super-admin, org-admin, and member roles out of the box
   (powered by [better-auth](https://www.better-auth.com/)).
 - 🧪 **Test coverage** — unit tests (Vitest) and end-to-end flows (Playwright).
+
+## Who Is It For?
+
+| You are | Your situation | How Ciao helps |
+|---------|---------------|----------------|
+| **Digital artist** | 5 synced screens for an exhibition | Open a browser on each monitor, manage videos from the dashboard |
+| **Small retail chain** | Menu boards at 3 locations need updating | Edit the layout once — prices update everywhere in real-time |
+| **Installer / integrator** | Client wants live news in a shop window | Plug in an HDMI stick with a browser, point it at the player URL, done |
+| **Event organiser** | Live programme info on lobby boards | Use the SDK to show today's agenda pulling from any data source |
 
 ## Project Status
 
 **Alpha — active development.** Core CMS and player flows are working.
 APIs and data models may change before the first stable release.
 Contributions, issue reports, and feedback are very welcome.
+
+## Built-In Webapp Connectors
+
+Three production-ready connectors ship with the platform:
+
+| Connector | What it does |
+|-----------|-------------|
+| **Google Calendar** | Display live calendar feeds on any screen zone |
+| **Queue / Eliminacode** | Full queue management — display board, remote counter, kiosk ticket kiosk |
+| **WordPress Link** | Pull and show content from any WordPress site via REST API |
+
+All three are built on the open Webapp SDK. You can build and publish your own
+using the same framework.
 
 ## Tech Stack
 
@@ -211,30 +240,48 @@ before opening a pull request.
 
 ---
 
-## Licensing
+## Licensing — The One Million Rule
 
-This repository uses **PolyForm Noncommercial 1.0.0**.
+Ciao Signage is open-source, with a licensing model designed to protect the
+community and the small players:
 
-- Non-commercial use is permitted by default.
-- Commercial use requires a separate commercial agreement.
+**Free for everyone** with annual revenue under **€1 million**:
+schools, non-profits, freelancers, artists, small businesses, hobbyists.
 
-Read full terms in [LICENSE](LICENSE) and policy details in
-[docs/governance/LICENSE-POLICY.md](docs/governance/LICENSE-POLICY.md).
+**Commercial license required** for organisations above that threshold and
+for system integrators who resell Ciao as part of larger deployments.
+
+> The goal: a small shop, a school, or an independent artist can run their
+> own personal TV at zero cost. We only ask for a commercial agreement from
+> those who already have a solid business.
+
+[Full terms](LICENSE) — [Licensing policy](docs/governance/LICENSE-POLICY.md)
 
 ---
 
-## Public Repo Notes
+## Security & Public Repo
 
-- Internal runbooks, private deployment details, and granular execution plans
-  are intentionally excluded from the public release process.
 - Never commit credentials, tokens, private host information, or customer data.
+- Internal runbooks and private deployment details are intentionally excluded
+  from the public release.
+- See [SECURITY.md](SECURITY.md) for the vulnerability disclosure policy.
+
+---
+
+## Ready to Go?
+
+**Create your own personal TV — free.**  
+Clone the repo, run `npm ci`, configure your `.env.local`, and you are live
+in minutes. Have questions or ideas? Open an issue or start a discussion.
+
+For large-scale commercial deployments, [reach out about a commercial licence](docs/governance/LICENSE-POLICY.md).
 
 ---
 
 ## Appendix: Local Quick Start (Alpha)
 
-This appendix is a complete, self-contained guide for getting Ciao running
-locally from scratch. It is especially useful for new contributors during
+This appendix is a complete, self-contained guide for getting Ciao Signage
+running locally from scratch. Especially useful for new contributors during
 the current alpha phase.
 
 ### Prerequisites Checklist
@@ -383,9 +430,11 @@ SMTP_FROM=noreply@ciao.local
 
 **`MongoServerError: Transaction numbers are only allowed on a replica set member`**  
 Your MongoDB is running in standalone mode. Initialise the replica set:
+
 ```bash
 mongosh --eval "rs.initiate()"
 ```
+
 Then restart MongoDB and your app.
 
 **`ECONNREFUSED 127.0.0.1:27017`**  
@@ -396,11 +445,13 @@ or via Docker (see Step 4).
 You haven't set passwords in `TEST-USERS.env.local`. Either copy from
 `TEST-USERS.env.example` and fill in values, or run the seed with
 auto-generated passwords for a disposable setup:
+
 ```bash
 SEED_ALLOW_PLACEHOLDER_PASSWORDS=true npm run seed:users
 ```
 
 **Port 3100 already in use**  
+
 ```bash
 npm run dev:clean   # kills the port then restarts
 # or

@@ -10,6 +10,7 @@ type Params = { params: Promise<{ id: string }> };
 const itemSchema = z.object({
   contentId: z.string().min(1, "contentId required"),
   durationMs: z.number().int().min(500).nullable().optional(),
+  durationOverride: z.boolean().optional(),
   order: z.number().int().optional(),
 });
 

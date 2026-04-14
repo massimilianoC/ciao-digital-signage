@@ -12,6 +12,7 @@ const playlistItemSchema = z.object({
   fitMode: z.enum(["cover", "fit"]).optional(),
   backgroundColor: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/).nullable().optional(),
   durationMs: z.number().int().min(500).nullable().optional(),
+  durationOverride: z.boolean().optional(),
   order: z.number().int().optional(),
 });
 

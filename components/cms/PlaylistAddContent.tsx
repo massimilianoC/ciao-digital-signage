@@ -16,12 +16,21 @@ interface PlaylistAddContentProps {
 const DEFAULT_DURATION_MS = 10_000;
 
 type PlaylistApiItem = {
-  contentId: string | { _id?: string };
+  contentId:
+    | string
+    | {
+      _id?: string;
+      type?: "image" | "video" | "url" | "widget";
+      config?: {
+        urlSubtype?: "youtube" | "video" | "image" | "pdf" | "webpage";
+      };
+    };
   title?: string;
   thumbnailUrl?: string;
   fitMode?: "cover" | "fit";
   backgroundColor?: string | null;
   durationMs?: number | null;
+  durationOverride?: boolean;
 };
 
 type PlaylistApiResponse = {
@@ -50,7 +59,8 @@ export function PlaylistAddContent({
         thumbnailUrl?: string;
         fitMode: "cover" | "fit";
         backgroundColor?: string | null;
-        durationMs: number;
+        durationMs: number | null;
+        durationOverride: boolean;
       }> = [];
 
       const latest = await fetch(`/api/playlists/${playlistId}`, {
@@ -71,6 +81,10 @@ export function PlaylistAddContent({
             if (!contentId) return [];
 
             const fitMode: "cover" | "fit" = item.fitMode === "fit" ? "fit" : "cover";
+            const contentType = typeof item.contentId === "object" ? item.contentId?.type : undefined;
+            const urlSubtype = typeof item.contentId === "object" ? item.contentId?.config?.urlSubtype : undefined;
+            const isVideoLike = contentType === "video" || (contentType === "url" && urlSubtype === "video");
+            const durationOverride = isVideoLike ? item.durationOverride === true : true;
 
             return [{
               contentId,
@@ -78,18 +92,24 @@ export function PlaylistAddContent({
               thumbnailUrl: item.thumbnailUrl,
               fitMode,
               backgroundColor: item.backgroundColor,
-              durationMs: item.durationMs ?? DEFAULT_DURATION_MS,
+              durationMs: durationOverride ? (item.durationMs ?? DEFAULT_DURATION_MS) : null,
+              durationOverride,
             }];
           });
       } else {
-        sourceItems = currentItems.map((item) => ({
-          contentId: item.contentId,
-          title: item.name,
-          thumbnailUrl: item.thumbnailUrl,
-          fitMode: item.fitMode === "fit" ? "fit" : "cover",
-          backgroundColor: item.backgroundColor,
-          durationMs: item.durationSeconds * 1000,
-        }));
+        sourceItems = currentItems.map((item) => {
+          const isVideoLike = item.type === "video" || (item.type === "url" && item.urlSubtype === "video");
+          const durationOverride = isVideoLike ? item.durationOverride === true : true;
+          return {
+            contentId: item.contentId,
+            title: item.name,
+            thumbnailUrl: item.thumbnailUrl,
+            fitMode: item.fitMode === "fit" ? "fit" : "cover",
+            backgroundColor: item.backgroundColor,
+            durationMs: durationOverride ? item.durationSeconds * 1000 : null,
+            durationOverride,
+          };
+        });
       }
 
       // Keep existing order and durations, but normalize duplicate content IDs.
@@ -99,7 +119,8 @@ export function PlaylistAddContent({
         thumbnailUrl?: string;
         fitMode: "cover" | "fit";
         backgroundColor?: string | null;
-        durationMs: number;
+        durationMs: number | null;
+        durationOverride: boolean;
       }>();
       for (const item of sourceItems) {
         if (!existingByContentId.has(item.contentId)) {
@@ -110,6 +131,7 @@ export function PlaylistAddContent({
             fitMode: item.fitMode,
             backgroundColor: item.backgroundColor ?? null,
             durationMs: item.durationMs,
+            durationOverride: item.durationOverride,
           });
         }
       }
@@ -122,18 +144,21 @@ export function PlaylistAddContent({
         thumbnailUrl?: string;
         fitMode: "cover" | "fit";
         backgroundColor?: string | null;
-        durationMs: number;
+        durationMs: number | null;
+        durationOverride: boolean;
       }>();
       for (const item of selectedItems) {
         if (existingByContentId.has(item._id)) continue;
         if (!selectedNewByContentId.has(item._id)) {
+          const isVideoLike = item.type === "video" || (item.type === "url" && item.urlSubtype === "video");
           selectedNewByContentId.set(item._id, {
             contentId: item._id,
             title: getContentDisplayName(item),
             thumbnailUrl: item.thumbnailUrl,
             fitMode: "cover",
             backgroundColor: item.backgroundColor ?? null,
-            durationMs: DEFAULT_DURATION_MS,
+            durationMs: isVideoLike ? null : DEFAULT_DURATION_MS,
+            durationOverride: !isVideoLike,
           });
         }
       }

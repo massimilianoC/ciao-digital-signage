@@ -28,14 +28,23 @@ function toPlayerManifest(
     id: string;
     type: "image" | "video" | "url" | "widget" | "layout";
     url: string;
+    urlSubtype?: "youtube" | "video" | "image" | "pdf" | "webpage";
+    interactive?: boolean;
     layoutId?: string;
     title?: string;
     thumbnailUrl?: string;
     fitMode?: "cover" | "fit";
     backgroundColor?: string | null;
     durationMs: number;
+    durationOverride?: boolean;
   }>;
 } {
+  const manifestItems = manifest.items ?? [];
+  const isSoleInteractiveUrl =
+    manifestItems.length === 1 &&
+    manifestItems[0]?.type === "url" &&
+    (!manifestItems[0]?.urlSubtype || manifestItems[0]?.urlSubtype === "webpage" || manifestItems[0]?.urlSubtype === "pdf");
+
   return {
     screenId: manifest.screenId,
     resolvedAt: manifest.validFrom ?? new Date().toISOString(),
@@ -46,7 +55,7 @@ function toPlayerManifest(
     backgroundColorOverride: manifest.backgroundColorOverride ?? null,
     transitionType: manifest.transitionType === "cut" ? "cut" : "fade",
     transitionMs: typeof manifest.transitionMs === "number" ? Math.max(0, manifest.transitionMs) : 500,
-    items: (manifest.items ?? []).map((item, index) => ({
+    items: manifestItems.map((item, index) => ({
       id: String(item.contentId ?? `${manifest.screenId}-${index}`),
       type: item.type,
       url: item.url ?? item.fileUrl ?? "",
@@ -54,11 +63,14 @@ function toPlayerManifest(
         item.type === "layout"
           ? String(item.contentId ?? "")
           : undefined,
+      urlSubtype: item.urlSubtype,
+      interactive: item.type === "url" && isSoleInteractiveUrl ? true : undefined,
       title: item.title,
       thumbnailUrl: item.thumbnailUrl,
       fitMode: item.fitMode,
       backgroundColor: item.backgroundColor ?? null,
       durationMs: item.durationMs ?? 10000,
+      durationOverride: item.durationOverride ?? true,
     })),
   };
 }

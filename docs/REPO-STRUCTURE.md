@@ -38,5 +38,5 @@ Use the docker files from `infra/docker/`:
 ## Contributor Navigation Hints
 
 - Start from `README.md` for project overview and governance docs.
-- Use `docs/00-architecture/` for technical internals.
+- Use `docs/architecture/` for technical internals.
 - Use `docs/REPO-STRUCTURE.md` as the quick map when onboarding.

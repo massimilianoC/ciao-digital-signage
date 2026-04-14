@@ -7,6 +7,7 @@ export interface IPlaylistItem {
   fitMode?: "cover" | "fit";
   backgroundColor?: string | null;
   durationMs?: number | null;
+  durationOverride?: boolean;
   order: number;
 }
 
@@ -34,6 +35,7 @@ const PlaylistItemSchema = new Schema<IPlaylistItem>(
     fitMode: { type: String, enum: ["cover", "fit"] },
     backgroundColor: { type: String, default: null },
     durationMs: { type: Number },
+    durationOverride: { type: Boolean, default: false },
     order: { type: Number, required: true, default: 0 },
   },
   { _id: false },

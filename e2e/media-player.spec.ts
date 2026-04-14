@@ -145,4 +145,80 @@ test.describe("Player media smoke @auth", () => {
 
         await player!.close();
     });
+
+    test("Video item advances on ended event without waiting full duration", async ({ page }) => {
+        const stamp = Date.now();
+
+        const videoContentResp = await page.request.post("/api/content", {
+            data: {
+                name: `video-ended-content-${stamp}`,
+                type: "url",
+                config: {
+                    url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+                    urlSubtype: "video",
+                },
+            },
+        });
+        expect(videoContentResp.ok()).toBe(true);
+        const videoContent = (await videoContentResp.json()) as ContentResponse;
+
+        const imageContentResp = await page.request.post("/api/content", {
+            data: {
+                name: `post-video-image-content-${stamp}`,
+                type: "url",
+                config: {
+                    url: "https://picsum.photos/seed/ciao-video-ended/1280/720",
+                    urlSubtype: "image",
+                },
+            },
+        });
+        expect(imageContentResp.ok()).toBe(true);
+        const imageContent = (await imageContentResp.json()) as ContentResponse;
+
+        const playlistResp = await page.request.post("/api/playlists", {
+            data: { name: `video-ended-playlist-${stamp}` },
+        });
+        expect(playlistResp.ok()).toBe(true);
+        const playlist = (await playlistResp.json()) as PlaylistResponse;
+
+        const replaceItemsResp = await page.request.patch(`/api/playlists/${playlist._id}`, {
+            data: {
+                items: [
+                    {
+                        contentId: videoContent._id,
+                        title: "Video first",
+                        // Long duration to ensure the transition is driven by "ended".
+                        durationMs: 120000,
+                    },
+                    {
+                        contentId: imageContent._id,
+                        title: "Image second",
+                        durationMs: 10000,
+                    },
+                ],
+            },
+        });
+        expect(replaceItemsResp.ok()).toBe(true);
+
+        const screenResp = await page.request.post("/api/screens", {
+            data: { name: `video-ended-screen-${stamp}`, timezone: "UTC" },
+        });
+        expect(screenResp.ok()).toBe(true);
+        const screen = (await screenResp.json()) as ScreenResponse;
+
+        await createScreenSchedule(page, screen._id, playlist._id, `video-ended-schedule-${stamp}`);
+
+        const player = await page.context().browser()?.newContext();
+        expect(player).toBeTruthy();
+        const playerPage = await player!.newPage();
+        await playerPage.goto(`/player/${screen._id}?token=${encodeURIComponent(screen.screenToken)}`);
+
+        await expect(playerPage.getByTestId("player-root")).toBeVisible();
+        await expect(playerPage.locator("video").first()).toBeVisible({ timeout: 20000 });
+
+        const imageLocator = playerPage.locator('img[src*="picsum.photos/seed/ciao-video-ended"]').first();
+        await expect(imageLocator).toBeVisible({ timeout: 30000 });
+
+        await player!.close();
+    });
 });

@@ -84,6 +84,7 @@ export class PlaylistService extends TenantRepository<IPlaylist> {
     items: Array<{
       contentId: string | Types.ObjectId;
       durationMs?: number | null;
+      durationOverride?: boolean;
       order?: number;
       fitMode?: "cover" | "fit";
       backgroundColor?: string | null;
@@ -93,6 +94,7 @@ export class PlaylistService extends TenantRepository<IPlaylist> {
   ): Promise<Array<{
     contentId: Types.ObjectId;
     durationMs?: number | null;
+    durationOverride: boolean;
     order: number;
     fitMode: "cover" | "fit";
     backgroundColor: string | null;
@@ -116,6 +118,7 @@ export class PlaylistService extends TenantRepository<IPlaylist> {
       return {
         contentId,
         durationMs: item.durationMs,
+        durationOverride: item.durationOverride === true,
         order: idx,
         fitMode: item.fitMode === "fit" ? "fit" : "cover",
         backgroundColor: this.normalizeColor(item.backgroundColor),
@@ -157,6 +160,7 @@ export class PlaylistService extends TenantRepository<IPlaylist> {
       items?: Array<{
         contentId: string | Types.ObjectId;
         durationMs?: number | null;
+        durationOverride?: boolean;
         order?: number;
         fitMode?: "cover" | "fit";
         backgroundColor?: string | null;
@@ -216,6 +220,7 @@ export class PlaylistService extends TenantRepository<IPlaylist> {
     items: Array<{
       contentId: string | Types.ObjectId;
       durationMs?: number | null;
+      durationOverride?: boolean;
       order?: number;
       fitMode?: "cover" | "fit";
       backgroundColor?: string | null;
